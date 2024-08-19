@@ -12,15 +12,33 @@ public class PostmanCollection {
     private Info info = new Info();
     private List<Item> item = new ArrayList<>();
     private List<Event> event = new ArrayList<>();
+    private List<Variable> variable = new ArrayList<>();
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Info {
-        private String _postman_id = "";   // Matches the field in the JSON
-        private String name = "";         // Title from the field "name"
+        private String _postman_id = "";
+        private String name = "";
         private String description = "";
-        private String schema = "";       // URL from "schema"
+        private String schema = "";
         private String version = "";
+        private Contact contact = new Contact();
+        private License license = new License();
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Contact {
+            private String name = "";
+            private String email = "";
+            private String url = "";
+        }
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class License {
+            private String name = "";
+            private String url = "";
+        }
     }
 
     @Data
@@ -40,6 +58,22 @@ public class PostmanCollection {
         private List<Header> header = new ArrayList<>();
         private Body body = new Body();
         private UrlObject url = new UrlObject();
+        private Auth auth = new Auth();
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Auth {
+            private String type = "";
+            private List<Bearer> bearer = new ArrayList<>();
+
+            @Data
+            @JsonIgnoreProperties(ignoreUnknown = true)
+            public static class Bearer {
+                private String key = "";
+                private String value = "";
+                private String type = "";
+            }
+        }
     }
 
     @Data
@@ -49,6 +83,14 @@ public class PostmanCollection {
         private String protocol = "";
         private List<String> host = new ArrayList<>();
         private List<String> path = new ArrayList<>();
+        private List<Query> query = new ArrayList<>();
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Query {
+            private String key = "";
+            private String value = "";
+        }
     }
 
     @Data
@@ -56,20 +98,21 @@ public class PostmanCollection {
     public static class Header {
         private String key = "";
         private String value = "";
-        private String type = ""; // Adjusted to include type if needed
+        private String type = "";
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Body {
         private String mode = "";
-        private String raw = ""; // Use raw string for body content
+        private String raw = "";
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Response {
         private String name = "";
+        private Integer code; // Added to match the schema
         private String description = "";
         private String body = "";
         private List<Header> header = new ArrayList<>();
@@ -79,6 +122,21 @@ public class PostmanCollection {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Event {
         private String listen = "";
-        private String script = "";
+        private Script script = new Script();
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Script {
+            private String type = "";
+            private List<String> exec = new ArrayList<>();
+        }
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Variable {
+        private String key = "";
+        private String value = "";
+        private String type = "";
     }
 }
