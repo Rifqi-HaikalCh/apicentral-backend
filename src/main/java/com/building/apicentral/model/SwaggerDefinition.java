@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import java.io.File;
 import java.io.InputStream;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +31,6 @@ public class SwaggerDefinition {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<String> produces = new ArrayList<>();
-
 
     @Data
     public static class Response {
@@ -75,12 +73,10 @@ public class SwaggerDefinition {
         private String name = "";
         private String description = "";
 
-        // Constructor that accepts a name
         public Tag(String name) {
             this.name = name;
         }
 
-        // Constructor that accepts both name and description
         public Tag(String name, String description) {
             this.name = name;
             this.description = description;
@@ -132,7 +128,7 @@ public class SwaggerDefinition {
         private List<Parameter> parameters = new ArrayList<>();
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        private Map<String, Response> responses = new HashMap<>(); // Directly using Map<String, Response>
+        private Map<String, Response> responses = new HashMap<>();
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private List<Map<String, List<String>>> security = new ArrayList<>();
@@ -140,7 +136,6 @@ public class SwaggerDefinition {
 
     @Data
     public static class Schema {
-
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private String type;
 
@@ -225,7 +220,19 @@ public class SwaggerDefinition {
         @JsonInclude(JsonInclude.Include.NON_NULL)
         private Items items;
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        private String title; // Added based on the example
+        private String title;
+
+        public void setItems(Items items) {
+            this.items = items;
+        }
+
+        public void setEnumValues(List<String> enumValues) {
+            this.enumValues = enumValues;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
     }
 
     @Data
@@ -241,10 +248,41 @@ public class SwaggerDefinition {
         @JsonInclude(JsonInclude.Include.NON_NULL)
         private Items items;
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        private String ref;  // Renamed from $ref
+        private String ref;
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private List<String> enumValues;
+        private Map<String, SwaggerProperty> properties;
+
+        public void setRef(String ref) {
+            this.ref = ref;
+        }
+
+        public void setItems(Items items) {
+            this.items = items;
+        }
+
+        public void setEnum(List<String> enumValues) {
+            this.enumValues = enumValues;
+        }
+
+        public void setProperties(Map<String, SwaggerProperty> properties) {
+            this.properties = properties;
+        }
+
+        @Override
+        public String toString() {
+            return "SwaggerProperty{" +
+                    "type='" + type + '\'' +
+                    ", format='" + format + '\'' +
+                    ", description='" + description + '\'' +
+                    ", example=" + example +
+                    ", items=" + items +
+                    ", ref='" + ref + '\'' +
+                    ", enumValues=" + enumValues +
+                    '}';
+        }
     }
+
 
     @Data
     public static class BearerAuth {
@@ -253,7 +291,6 @@ public class SwaggerDefinition {
 
     @Data
     public static class RequestBody {
-
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private String description;
         private Map<String, MediaType> content = new HashMap<>();
@@ -274,17 +311,26 @@ public class SwaggerDefinition {
     @Data
     public static class Items {
         private String type;
-        private String format;
 
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        private String format;
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        private String ref;  // Renamed from $ref
+        private String ref;
     }
+
     @Data
     public static class Resource {
         private String description;
-        private File file; // Assuming there's a File class
+        private File file;
         private String filename;
-        private InputStream inputStream; // Assuming there's an InputStream class
+        private InputStream inputStream;
         private Boolean open;
         private Boolean readable;
         private String uri;

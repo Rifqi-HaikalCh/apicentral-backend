@@ -1,6 +1,7 @@
 package com.building.apicentral.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ public class PostmanCollection {
     private List<Item> item = new ArrayList<>();
     private List<Event> event = new ArrayList<>();
     private List<Variable> variable = new ArrayList<>();
+    private String desc = "";
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -59,6 +61,7 @@ public class PostmanCollection {
         private Body body = new Body();
         private UrlObject url = new UrlObject();
         private Auth auth = new Auth();
+        private String description = ""; // Renamed to 'description'
 
         @Data
         @JsonIgnoreProperties(ignoreUnknown = true)
