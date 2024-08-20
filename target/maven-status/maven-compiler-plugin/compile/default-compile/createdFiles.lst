@@ -19,6 +19,7 @@ com\building\apicentral\model\PostmanCollection$Variable.class
 com\building\apicentral\model\SwaggerDefinition$PathItem.class
 com\building\apicentral\model\PostmanCollection$UrlObject.class
 com\building\apicentral\model\PostmanCollection.class
+com\building\apicentral\config\WebConfig.class
 com\building\apicentral\model\SwaggerDefinition$Parameter.class
 com\building\apicentral\model\PostmanCollection$Request$Auth$Bearer.class
 com\building\apicentral\model\SwaggerDefinition$Responses.class

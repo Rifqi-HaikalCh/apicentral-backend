@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.web.bind.annotation.CrossOrigin;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -33,6 +33,7 @@ public class ConversionController {
         this.objectMapper = objectMapper;
     }
 
+    @CrossOrigin(origins = "http://localhost:4200")
     @PostMapping(value = "/postman-to-swagger",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE},
             produces = MediaType.APPLICATION_JSON_VALUE)
