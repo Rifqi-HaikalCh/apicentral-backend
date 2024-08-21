@@ -3,7 +3,6 @@ package com.building.apicentral.service;
 import com.building.apicentral.model.PostmanCollection;
 import com.building.apicentral.model.SwaggerDefinition;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,11 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -258,7 +253,6 @@ public class PostmanToSwaggerService {
     private void setSecurityDefinitions(SwaggerDefinition swaggerDefinition, PostmanCollection postmanCollection) {
         Map<String, SwaggerDefinition.SecurityScheme> securityDefinitions = new HashMap<>();
 
-        // Only set if Postman collection has authentication details
         if (postmanCollection.getItem().stream()
                 .anyMatch(item -> item.getRequest().getAuth() != null && "bearer".equals(item.getRequest().getAuth().getType()))) {
             SwaggerDefinition.SecurityScheme jwtScheme = new SwaggerDefinition.SecurityScheme();
@@ -380,26 +374,21 @@ public class PostmanToSwaggerService {
     private SwaggerDefinition.Operation createOperation(PostmanCollection.Item item) {
         SwaggerDefinition.Operation operation = new SwaggerDefinition.Operation();
 
-        // Set atribut operation berdasarkan data dari item
         operation.setTags(Collections.singletonList(item.getName()));
         operation.setSummary(item.getName());
         operation.setDescription(item.getRequest().getDescription() != null ? item.getRequest().getDescription() : "");
 
-        // Tambahkan parameter
         List<SwaggerDefinition.Parameter> parameters = new ArrayList<>();
         addBodyParameter(parameters, item.getRequest().getBody());
         addHeaderParameters(parameters, item.getRequest().getHeader());
         addUrlParameters(parameters, item.getRequest().getUrl());
         operation.setParameters(parameters);
 
-        // Tambahkan respons
-        operation.setResponses(createResponses(item)); // Panggil createResponses dengan argumen item
+        operation.setResponses(createResponses(item));
 
-        // Tambahkan keamanan jika ada
         if (item.getRequest().getAuth() != null) {
             operation.setSecurity(createSecurity(item.getRequest().getAuth()));
         }
-
         return operation;
     }
 
@@ -459,13 +448,10 @@ public class PostmanToSwaggerService {
 
         if (body.getRaw() != null) {
             try {
-                // Preprocess the JSON string to ensure it's complete
                 String cleanedJson = preprocessJson(body.getRaw());
 
-                // Validate the JSON string
                 validateJsonString(cleanedJson);
 
-                // Parse the JSON string
                 JsonNode jsonNode = objectMapper.readTree(cleanedJson);
                 properties = createPropertiesFromJsonNode(jsonNode);
             } catch (JsonProcessingException e) {
@@ -481,14 +467,11 @@ public class PostmanToSwaggerService {
 
     private void validateJsonString(String json) throws JsonProcessingException {
         try {
-            // Try to parse the JSON string to check if it's valid
             objectMapper.readTree(json);
         } catch (JsonParseException | JsonMappingException e) {
-            // Log the invalid JSON and rethrow the exception with additional context
             log.error("Invalid JSON: {} | Error: {}", json, e.getMessage());
             throw new JsonProcessingException("Malformed JSON: " + e.getMessage(), e);
         } catch (IOException e) {
-            // Handle any other IOExceptions that might occur
             log.error("Error processing JSON: {} | Error: {}", json, e.getMessage());
             throw new JsonProcessingException("Error processing JSON: " + e.getMessage(), e);
         }
@@ -497,7 +480,6 @@ public class PostmanToSwaggerService {
     private String preprocessJson(String json) {
         StringBuilder sb = new StringBuilder(json.trim());
 
-        // Count opening and closing braces
         int openBraces = 0;
         int closeBraces = 0;
         for (char c : sb.toString().toCharArray()) {
@@ -505,16 +487,13 @@ public class PostmanToSwaggerService {
             if (c == '}') closeBraces++;
         }
 
-        // Complete the JSON structure if necessary
         while (closeBraces < openBraces) {
             sb.append("}");
             closeBraces++;
         }
 
-        // Remove trailing commas before closing braces
         String result = sb.toString().replaceAll(",\\s*}", "}");
 
-        // Log if the JSON was incomplete
         if (!json.equals(result)) {
             log.warn("Incomplete JSON detected and fixed: Original: {}, Fixed: {}", json, result);
         }
@@ -523,7 +502,6 @@ public class PostmanToSwaggerService {
     }
 
     private boolean isJsonComplete(String json) {
-        // Count opening and closing braces
         int openBraces = 0;
         int closeBraces = 0;
         for (char c : json.toCharArray()) {
@@ -536,25 +514,21 @@ public class PostmanToSwaggerService {
     private Map<String, SwaggerDefinition.SwaggerProperty> createPropertiesFromJsonNode(JsonNode jsonNode) {
         Map<String, SwaggerDefinition.SwaggerProperty> properties = new HashMap<>();
 
-        // Handle the JSON node here, recursively creating properties
         if (jsonNode.isObject()) {
-            // Process object properties
             jsonNode.fields().forEachRemaining(entry -> {
                 String key = entry.getKey();
                 JsonNode value = entry.getValue();
-                SwaggerDefinition.SwaggerProperty property = createPropertyFromJsonNode(value); // Recursive call
+                SwaggerDefinition.SwaggerProperty property = createPropertyFromJsonNode(value);
                 properties.put(key, property);
             });
         } else if (jsonNode.isArray()) {
-            // Process array properties
             if (jsonNode.size() > 0) {
-                SwaggerDefinition.SwaggerProperty itemProperty = createPropertyFromJsonNode(jsonNode.get(0)); // Recursive call
-                properties.put("[*]", itemProperty); // Use a generic key for arrays (adjust if needed)
+                SwaggerDefinition.SwaggerProperty itemProperty = createPropertyFromJsonNode(jsonNode.get(0));
+                properties.put("[*]", itemProperty);
             }
         } else {
-            // Handle other data types (string, number, boolean)
-            SwaggerDefinition.SwaggerProperty property = createPropertyFromJsonNode(jsonNode); // Recursive call
-            properties.put("", property); // Use an empty key for simple types (adjust if needed)
+            SwaggerDefinition.SwaggerProperty property = createPropertyFromJsonNode(jsonNode);
+            properties.put("", property);
         }
 
         return properties;
@@ -586,7 +560,6 @@ public class PostmanToSwaggerService {
     private Map<String, SwaggerDefinition.Response> createResponses(PostmanCollection.Item item) {
         Map<String, SwaggerDefinition.Response> responses = new HashMap<>();
 
-        // Tambahkan respons default dengan exampleBody kosong
         responses.put("200", createResponse("Successful response", ""));
         responses.put("400", createResponse("Bad request", ""));
         responses.put("401", createResponse("Unauthorized", ""));
@@ -594,7 +567,6 @@ public class PostmanToSwaggerService {
         responses.put("404", createResponse("Not found", ""));
         responses.put("500", createResponse("Internal server error", ""));
 
-        // Tambahkan respons dari Postman examples jika tersedia
         if (item.getResponse() != null) {
             for (PostmanCollection.Response response : item.getResponse()) {
                 String statusCode = String.valueOf(response.getCode());

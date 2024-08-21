@@ -42,7 +42,6 @@
 			<version>2.15.0</version>
 		</dependency>
 
-		<!-- Apache Commons Lang -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>

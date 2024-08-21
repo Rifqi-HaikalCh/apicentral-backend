@@ -1,7 +1,6 @@
 package com.building.apicentral.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -61,7 +60,7 @@ public class PostmanCollection {
         private Body body = new Body();
         private UrlObject url = new UrlObject();
         private Auth auth = new Auth();
-        private String description = ""; // Renamed to 'description'
+        private String description = "";
 
         @Data
         @JsonIgnoreProperties(ignoreUnknown = true)
@@ -115,7 +114,7 @@ public class PostmanCollection {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Response {
         private String name = "";
-        private Integer code; // Added to match the schema
+        private Integer code;
         private String description = "";
         private String body = "";
         private List<Header> header = new ArrayList<>();

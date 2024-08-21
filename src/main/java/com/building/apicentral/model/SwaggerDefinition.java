@@ -283,7 +283,6 @@ public class SwaggerDefinition {
         }
     }
 
-
     @Data
     public static class BearerAuth {
         private String token;
