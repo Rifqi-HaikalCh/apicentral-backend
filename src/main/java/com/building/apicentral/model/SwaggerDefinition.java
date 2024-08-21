@@ -1,6 +1,7 @@
 package com.building.apicentral.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sun.xml.internal.messaging.saaj.packaging.mime.Header;
 import lombok.Data;
 import java.io.File;
 import java.io.InputStream;
@@ -38,7 +39,11 @@ public class SwaggerDefinition {
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         private Schema schema;
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        private Map<String, Header> headers = new HashMap<>();
     }
+
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -47,9 +52,12 @@ public class SwaggerDefinition {
         private String version = "";
         private String title = "";
         private String termsOfService = "";
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private Contact contact = new Contact();
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private License license = new License();
     }
+
 
     @Data
     public static class Contact {
@@ -63,6 +71,7 @@ public class SwaggerDefinition {
     }
 
     @Data
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class License {
         private String name = "";
         private String url = "";
@@ -71,6 +80,7 @@ public class SwaggerDefinition {
     @Data
     public static class Tag {
         private String name = "";
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private String description = "";
 
         public Tag(String name) {
@@ -171,15 +181,15 @@ public class SwaggerDefinition {
 
     @Data
     public static class Responses {
-        private Map<String, Response> responses = new HashMap<>();
-
-        public void setResponses(Map<String, Response> responses) {
-            this.responses = responses;
-        }
-
-        public void addResponse(String name, Response response) {
-            this.responses.put(name, response);
-        }
+        private String description = "";
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        private Schema schema;
+        private Map<String, Header> headers = new HashMap<>();
+    }
+    @Data
+    public static class Header {
+        private String description;
+        private String schema;
     }
 
     @Data
@@ -197,15 +207,14 @@ public class SwaggerDefinition {
     }
 
     @Data
-    public static class Definitions {
-        private Map<String, Definition> definitions = new HashMap<>();
-    }
-
-    @Data
     public static class SecurityScheme {
         private String type;
         private String name;
         private String in;
+    }
+    @Data
+    public static class Definitions {
+        private Map<String, Definition> definitions = new HashMap<>();
     }
 
     @Data

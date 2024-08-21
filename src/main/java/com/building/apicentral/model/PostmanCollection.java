@@ -45,8 +45,8 @@ public class PostmanCollection {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Item {
-        private String name = "";
-        private String description = "";
+        private Object name = "";
+        private Object description = "";
         private List<Item> item = new ArrayList<>();
         private Request request = new Request();
         private List<Response> response = new ArrayList<>();
@@ -55,12 +55,12 @@ public class PostmanCollection {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Request {
-        private String method = "";
+        private Object method = "";
         private List<Header> header = new ArrayList<>();
         private Body body = new Body();
         private UrlObject url = new UrlObject();
         private Auth auth = new Auth();
-        private String description = "";
+        private Object description = "";
 
         @Data
         @JsonIgnoreProperties(ignoreUnknown = true)
@@ -113,11 +113,19 @@ public class PostmanCollection {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Response {
-        private String name = "";
+        private Object name = "";
         private Integer code;
-        private String description = "";
-        private String body = "";
+        private Object description = "";
+        private Object body = "";
         private List<Header> header = new ArrayList<>();
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Header {
+            private Object key = "";
+            private Object value = "";
+            private Object type = "";
+        }
     }
 
     @Data
