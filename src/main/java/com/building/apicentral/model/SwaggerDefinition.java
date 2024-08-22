@@ -1,7 +1,6 @@
 package com.building.apicentral.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.sun.xml.internal.messaging.saaj.packaging.mime.Header;
 import lombok.Data;
 import java.io.File;
 import java.io.InputStream;
@@ -26,6 +25,9 @@ public class SwaggerDefinition {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<String> schemes = new ArrayList<>();
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<String> operationId = new ArrayList<>();
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<String> consumes = new ArrayList<>();
@@ -73,7 +75,9 @@ public class SwaggerDefinition {
     @Data
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class License {
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private String name = "";
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private String url = "";
     }
 
@@ -142,6 +146,16 @@ public class SwaggerDefinition {
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private List<Map<String, List<String>>> security = new ArrayList<>();
+    }
+
+    // Method to add a consume type
+    public void addConsume(String consume) {
+        this.consumes.add(consume);
+    }
+
+    // Method to add a produce type
+    public void addProduce(String produce) {
+        this.produces.add(produce);
     }
 
     @Data
