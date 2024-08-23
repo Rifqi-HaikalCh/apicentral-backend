@@ -55,61 +55,62 @@ public class PostmanToSwaggerService {
 
         SwaggerDefinition.Info swaggerInfo = new SwaggerDefinition.Info();
 
-        swaggerInfo.setTitle(info.getName());
-        swaggerInfo.setDescription(info.getDescription());
+        String title = info.getName();
+        swaggerInfo.setTitle(title);
+        swaggerInfo.setDescription(title);  // Description same as title
 
         LocalDate currentDate = LocalDate.now();
-        String version = "v." + currentDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".1";
-        swaggerInfo.setVersion(version);
+        swaggerInfo.setVersion("v." + currentDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".1");
 
-        PostmanCollection.Info.Contact contact = info.getContact();
-        if (contact != null) {
-            SwaggerDefinition.Contact swaggerContact = new SwaggerDefinition.Contact();
-            swaggerContact.setName(contact.getName());
-            swaggerContact.setEmail(contact.getEmail());
-            swaggerContact.setUrl(contact.getUrl());
-            swaggerInfo.setContact(swaggerContact);
+        // Set default contact
+        SwaggerDefinition.Contact swaggerContact = new SwaggerDefinition.Contact();
+        String[] nameParts = title.split("\\s+");
+        swaggerContact.setName(nameParts.length > 1 ?
+                nameParts[0] + " " + nameParts[nameParts.length - 1] : title);
+        swaggerContact.setUrl("ntt");
+        swaggerContact.setEmail("myeaddress@company.com");
+
+        // Set default license
+        SwaggerDefinition.License swaggerLicense = new SwaggerDefinition.License();
+        swaggerLicense.setName("For internal usage only");
+        swaggerLicense.setUrl("ntt");
+
+        // Override defaults with Postman info if available
+        PostmanCollection.Info.Contact postmanContact = info.getContact();
+        if (postmanContact != null) {
+            if (postmanContact.getName() != null) swaggerContact.setName(postmanContact.getName());
+            if (postmanContact.getEmail() != null) swaggerContact.setEmail(postmanContact.getEmail());
+            if (postmanContact.getUrl() != null) swaggerContact.setUrl(postmanContact.getUrl());
         }
 
-        PostmanCollection.Info.License license = info.getLicense();
-        if (license != null) {
-            SwaggerDefinition.License swaggerLicense = new SwaggerDefinition.License();
-            swaggerLicense.setName(license.getName());
-            swaggerLicense.setUrl(license.getUrl());
-            swaggerInfo.setLicense(swaggerLicense);
+        PostmanCollection.Info.License postmanLicense = info.getLicense();
+        if (postmanLicense != null) {
+            if (postmanLicense.getName() != null) swaggerLicense.setName(postmanLicense.getName());
+            if (postmanLicense.getUrl() != null) swaggerLicense.setUrl(postmanLicense.getUrl());
         }
 
-        // Call extractContactAndLicenseFromDescription method
-        extractContactAndLicenseFromDescription(swaggerInfo, info.getDescription());
+        String description = info.getDescription();
+        if (description != null && !description.isEmpty()) {
+            Pattern contactPattern = Pattern.compile("Contact:\\s*([^\\n]+)\\s*Email:\\s*([^\\n]+)\\s*URL:\\s*([^\\n]+)");
+            Matcher contactMatcher = contactPattern.matcher(description);
+            if (contactMatcher.find()) {
+                swaggerContact.setName(contactMatcher.group(1).trim());
+                swaggerContact.setEmail(contactMatcher.group(2).trim());
+                swaggerContact.setUrl(contactMatcher.group(3).trim());
+            }
 
+            Pattern licensePattern = Pattern.compile("License:\\s*([^\\n]+)\\s*License URL:\\s*([^\\n]+)");
+            Matcher licenseMatcher = licensePattern.matcher(description);
+            if (licenseMatcher.find()) {
+                swaggerLicense.setName(licenseMatcher.group(1).trim());
+                swaggerLicense.setUrl(licenseMatcher.group(2).trim());
+            }
+        }
+
+        swaggerInfo.setContact(swaggerContact);
+        swaggerInfo.setLicense(swaggerLicense);
         swaggerDefinition.setInfo(swaggerInfo);
     }
-
-    private void extractContactAndLicenseFromDescription(SwaggerDefinition.Info swaggerInfo, String description) {
-        if (description == null || description.isEmpty()) {
-            return;
-        }
-
-        Pattern contactPattern = Pattern.compile("Contact:\\s*([^\\n]+)\\s*Email:\\s*([^\\n]+)\\s*URL:\\s*([^\\n]+)");
-        Matcher contactMatcher = contactPattern.matcher(description);
-        if (contactMatcher.find()) {
-            SwaggerDefinition.Contact contact = new SwaggerDefinition.Contact();
-            contact.setName(contactMatcher.group(1).trim());
-            contact.setEmail(contactMatcher.group(2).trim());
-            contact.setUrl(contactMatcher.group(3).trim());
-            swaggerInfo.setContact(contact);
-        }
-
-        Pattern licensePattern = Pattern.compile("License:\\s*([^\\n]+)\\s*License URL:\\s*([^\\n]+)");
-        Matcher licenseMatcher = licensePattern.matcher(description);
-        if (licenseMatcher.find()) {
-            SwaggerDefinition.License license = new SwaggerDefinition.License();
-            license.setName(licenseMatcher.group(1).trim());
-            license.setUrl(licenseMatcher.group(2).trim());
-            swaggerInfo.setLicense(license);
-        }
-    }
-
 
     private void setHostAndBasePath(SwaggerDefinition swaggerDefinition, PostmanCollection postmanCollection) {
         if (postmanCollection.getItem() == null || postmanCollection.getItem().isEmpty()) {
@@ -230,64 +231,6 @@ public class PostmanToSwaggerService {
         Map<String, SwaggerDefinition.PathItem> pathsMap = new HashMap<>();
         processItems(items, pathsMap, "");
         swaggerDefinition.setPaths(pathsMap);
-    }
-
-    private void addPath(SwaggerDefinition swaggerDefinition, PostmanCollection.Item item) {
-        if (item.getRequest() == null || item.getRequest().getUrl() == null) {
-            return;
-        }
-
-        String path = String.join("/", item.getRequest().getUrl().getPath());
-        path = "/" + path;
-
-        SwaggerDefinition.PathItem pathItem = swaggerDefinition.getPaths().computeIfAbsent(path, k -> new SwaggerDefinition.PathItem());
-
-        SwaggerDefinition.Operation operation = new SwaggerDefinition.Operation();
-        operation.setSummary(item.getName().toString());
-        operation.setDescription(item.getDescription() != null ? item.getDescription().toString() : "");
-        operation.setOperationId(item.getName().toString().replaceAll("\\s+", "_").toLowerCase());
-
-        // Set parameters
-        operation.setParameters(createParameters(item.getRequest()));
-
-        // Set security
-        operation.setSecurity(createSecurity(item.getRequest().getAuth()));
-
-        // Set responses
-        Map<String, SwaggerDefinition.Response> responses = new HashMap<>();
-        if (item.getResponse() != null && !item.getResponse().isEmpty()) {
-            for (PostmanCollection.Item.Response response : item.getResponse()) {
-                SwaggerDefinition.Response swaggerResponse = new SwaggerDefinition.Response();
-                swaggerResponse.setDescription(response.getName().toString());
-                responses.put(String.valueOf(response.getCode()), swaggerResponse);
-            }
-        } else {
-            // Default response if none provided
-            SwaggerDefinition.Response defaultResponse = new SwaggerDefinition.Response();
-            defaultResponse.setDescription("Successful operation");
-            responses.put("200", defaultResponse);
-        }
-        operation.setResponses(responses);
-
-        // Set the operation for the appropriate HTTP method
-        String method = item.getRequest().getMethod().toString().toLowerCase();
-        switch (method) {
-            case "get":
-                pathItem.setGet(operation);
-                break;
-            case "post":
-                pathItem.setPost(operation);
-                break;
-            case "put":
-                pathItem.setPut(operation);
-                break;
-            case "delete":
-                pathItem.setDelete(operation);
-                break;
-            default:
-                log.warn("Unsupported HTTP method: {}", method);
-                break;
-        }
     }
 
     private void processItems(List<PostmanCollection.Item> items, Map<String, SwaggerDefinition.PathItem> pathsMap, String parentPath) {
@@ -533,43 +476,85 @@ public class PostmanToSwaggerService {
             bodyParameter.setName("body");
             bodyParameter.setIn("body");
             bodyParameter.setRequired(true);
+            bodyParameter.setDescription("Request body");
             SwaggerDefinition.Schema schema = new SwaggerDefinition.Schema();
             schema.setType("object");
-            schema.setProperties(createPropertiesFromBody(body));
+            Map<String, SwaggerDefinition.SwaggerProperty> properties = createPropertiesFromBody(body);
+            schema.setProperties(properties);
             bodyParameter.setSchema(schema);
             parameters.add(bodyParameter);
         }
     }
 
+
     private void addHeaderParameters(List<SwaggerDefinition.Parameter> parameters, List<PostmanCollection.Header> headers) {
         if (headers != null) {
             for (PostmanCollection.Header header : headers) {
                 SwaggerDefinition.Parameter headerParameter = new SwaggerDefinition.Parameter();
-                headerParameter.setName(extractStringValue(header.getKey()));
+                String headerName = extractStringValue(header.getKey());
+                headerParameter.setName(headerName);
                 headerParameter.setIn("header");
                 headerParameter.setRequired(false);
+                headerParameter.setDescription(formatDescription(headerName));
                 SwaggerDefinition.Schema schema = new SwaggerDefinition.Schema();
                 schema.setType("string");
                 headerParameter.setSchema(schema);
+                if (header.getType() != null) {
+                    schema.setType(header.getType().toString());
+                }
                 parameters.add(headerParameter);
             }
         }
     }
 
     private void addUrlParameters(List<SwaggerDefinition.Parameter> parameters, PostmanCollection.Item.UrlObject url) {
-        if (url != null && url.getQuery() != null) {
-            for (PostmanCollection.Item.UrlObject.Query query : url.getQuery()) {
+        if (url != null) {
+            addQueryParameters(parameters, url.getQuery());
+            addPathParameters(parameters, url.getPath());
+        }
+    }
+
+    private void addQueryParameters(List<SwaggerDefinition.Parameter> parameters, List<PostmanCollection.Item.UrlObject.Query> queries) {
+        if (queries != null) {
+            for (PostmanCollection.Item.UrlObject.Query query : queries) {
                 SwaggerDefinition.Parameter queryParameter = new SwaggerDefinition.Parameter();
-                String keyString = query.getKey() != null ? query.getKey().toString() : "";
+                String keyString = extractStringValue(query.getKey());
                 queryParameter.setName(keyString);
                 queryParameter.setIn("query");
                 queryParameter.setRequired(false);
+                queryParameter.setDescription(formatDescription(keyString));
                 SwaggerDefinition.Schema schema = new SwaggerDefinition.Schema();
                 schema.setType("string");
+                if (query.getValue() != null) {
+                    schema.setExample(query.getValue());
+                }
                 queryParameter.setSchema(schema);
                 parameters.add(queryParameter);
             }
         }
+    }
+
+    private void addPathParameters(List<SwaggerDefinition.Parameter> parameters, List<String> pathSegments) {
+        if (pathSegments != null) {
+            for (String segment : pathSegments) {
+                if (segment.startsWith("{") && segment.endsWith("}")) {
+                    SwaggerDefinition.Parameter pathParameter = new SwaggerDefinition.Parameter();
+                    String paramName = segment.substring(1, segment.length() - 1);
+                    pathParameter.setName(paramName);
+                    pathParameter.setIn("path");
+                    pathParameter.setRequired(true);
+                    pathParameter.setDescription(formatDescription(paramName));
+                    SwaggerDefinition.Schema schema = new SwaggerDefinition.Schema();
+                    schema.setType("string");
+                    pathParameter.setSchema(schema);
+                    parameters.add(pathParameter);
+                }
+            }
+        }
+    }
+
+    private String formatDescription(String name) {
+        return name.replaceAll("[-_]", " ").trim();
     }
 
     public class JsonProcessingException extends RuntimeException {
@@ -578,12 +563,11 @@ public class PostmanToSwaggerService {
         }
     }
 
-    private Map createPropertiesFromBody(PostmanCollection.Body body) {
-        Map properties = new HashMap<>();
+    private Map<String, SwaggerDefinition.SwaggerProperty> createPropertiesFromBody(PostmanCollection.Body body) {
+        Map<String, SwaggerDefinition.SwaggerProperty> properties = new HashMap<>();
 
         if (body.getRaw() != null) {
             try {
-                // Cast atau konversi Object menjadi String
                 String rawString = body.getRaw().toString();
 
                 String cleanedJson = preprocessJson(rawString);
@@ -602,6 +586,7 @@ public class PostmanToSwaggerService {
         }
         return properties;
     }
+
 
 
     private void validateJsonString(String json) throws JsonProcessingException {
@@ -652,24 +637,14 @@ public class PostmanToSwaggerService {
 
     private Map<String, SwaggerDefinition.SwaggerProperty> createPropertiesFromJsonNode(JsonNode jsonNode) {
         Map<String, SwaggerDefinition.SwaggerProperty> properties = new HashMap<>();
-
-        if (jsonNode.isObject()) {
-            jsonNode.fields().forEachRemaining(entry -> {
-                String key = entry.getKey();
-                JsonNode value = entry.getValue();
-                SwaggerDefinition.SwaggerProperty property = createPropertyFromJsonNode(value);
-                properties.put(key, property);
-            });
-        } else if (jsonNode.isArray()) {
-            if (jsonNode.size() > 0) {
-                SwaggerDefinition.SwaggerProperty itemProperty = createPropertyFromJsonNode(jsonNode.get(0));
-                properties.put("[*]", itemProperty);
-            }
-        } else {
-            SwaggerDefinition.SwaggerProperty property = createPropertyFromJsonNode(jsonNode);
-            properties.put("", property);
+        Iterator<Map.Entry<String, JsonNode>> fields = jsonNode.fields();
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> entry = fields.next();
+            String key = entry.getKey();
+            JsonNode value = entry.getValue();
+            SwaggerDefinition.SwaggerProperty property = createPropertyFromJsonNode(value);
+            properties.put(key, property);
         }
-
         return properties;
     }
 
@@ -677,23 +652,67 @@ public class PostmanToSwaggerService {
         SwaggerDefinition.SwaggerProperty property = new SwaggerDefinition.SwaggerProperty();
         if (jsonNode.isTextual()) {
             property.setType("string");
+            property.setExample(jsonNode.asText());
         } else if (jsonNode.isNumber()) {
             property.setType("number");
+            if (jsonNode.isInt()) {
+                property.setFormat("int32");
+            } else if (jsonNode.isLong()) {
+                property.setFormat("int64");
+            } else if (jsonNode.isFloat() || jsonNode.isDouble()) {
+                property.setFormat("float");
+            }
+            property.setExample(jsonNode.numberValue());
         } else if (jsonNode.isBoolean()) {
             property.setType("boolean");
+            property.setExample(jsonNode.booleanValue());
         } else if (jsonNode.isArray()) {
             property.setType("array");
+            SwaggerDefinition.Items items = new SwaggerDefinition.Items();
             if (jsonNode.size() > 0) {
-                SwaggerDefinition.Items items = new SwaggerDefinition.Items();
-                SwaggerDefinition.SwaggerProperty itemProperty = createPropertyFromJsonNode(jsonNode.get(0));
-                items.setType(itemProperty.getType());
-                property.setItems(items);
+                JsonNode firstItem = jsonNode.get(0);
+                if (firstItem.isObject()) {
+                    items.setType("object");
+                    SwaggerDefinition.SwaggerProperty itemProperty = createPropertyFromJsonNode(firstItem);
+                    items.setRef("#/definitions/" + generateDefinitionName(firstItem));
+                    // Add the item definition to a global map of definitions (you'll need to implement this)
+                    addDefinition(generateDefinitionName(firstItem), itemProperty);
+                } else {
+                    items.setType(getJsonNodeType(firstItem));
+                }
             }
+            property.setItems(items);
         } else if (jsonNode.isObject()) {
             property.setType("object");
             property.setProperties(createPropertiesFromJsonNode(jsonNode));
+        } else {
+            property.setType("string");
         }
+
+        // Set description (you might want to generate a meaningful description based on the property name or content)
+        property.setDescription("Description for " + property.getType() + " property");
+
         return property;
+    }
+
+    private String getJsonNodeType(JsonNode node) {
+        if (node.isTextual()) return "string";
+        if (node.isNumber()) return "number";
+        if (node.isBoolean()) return "boolean";
+        if (node.isObject()) return "object";
+        if (node.isArray()) return "array";
+        return "string"; // default to string for other types
+    }
+
+    private String generateDefinitionName(JsonNode node) {
+        // Implement a method to generate a unique name for the definition
+        // This could be based on the content of the node or use a counter
+        return "Definition" + Math.abs(node.hashCode());
+    }
+
+    private void addDefinition(String name, SwaggerDefinition.SwaggerProperty property) {
+        // Implement a method to add the definition to a global map of definitions
+        // This map should be accessible when building the final Swagger document
     }
 
     private Map<String, SwaggerDefinition.Response> createResponses(PostmanCollection.Item item) {

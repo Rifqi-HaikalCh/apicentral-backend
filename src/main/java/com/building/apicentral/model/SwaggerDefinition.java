@@ -171,6 +171,9 @@ public class SwaggerDefinition {
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         private String ref;
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        private String example;
     }
 
     @Data
@@ -288,9 +291,6 @@ public class SwaggerDefinition {
             this.enumValues = enumValues;
         }
 
-        public void setProperties(Map<String, SwaggerProperty> properties) {
-            this.properties = properties;
-        }
 
         @Override
         public String toString() {

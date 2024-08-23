@@ -34,7 +34,6 @@ com\building\apicentral\model\PostmanCollection$Info.class
 com\building\apicentral\model\PostmanCollection$Info$License.class
 com\building\apicentral\model\SwaggerDefinition$BearerAuth.class
 com\building\apicentral\model\SwaggerDefinition$Tag.class
-com\building\apicentral\model\PostmanCollection$Item$Request$Auth$Bearer.class
 com\building\apicentral\model\PostmanCollection$Info$Contact.class
 com\building\apicentral\model\PostmanCollection$Item.class
 com\building\apicentral\model\SwaggerDefinition$SecurityScheme.class
